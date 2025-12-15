@@ -1,0 +1,7 @@
+
+/bin
+appsettings.Development.json
+appsettings.json
+/bind
+/logs
+/obj
