@@ -9,6 +9,7 @@ using OpenStar.Client.Cluster.Loader;
 using OpenStar.Client.Endpoint;
 using OpenStar.Core;
 using OpenStar.Core.Cluster;
+using OpenStar.Events;
 using Serilog;
 using ILogger = Serilog.ILogger;
 
@@ -63,6 +64,9 @@ public class OpenStar : IOpenStarClient
 
         string clp = Path.Combine(_storagePath, "Clusters");
         _loaders = [new FilesystemClusterLoader(this.Manager, clp, Logger.ForContext<FilesystemClusterLoader>())];
+
+        OpenStarEvents.InitializeWebApplication += SetupApplication;
+        OpenStarEvents.InitializeWebApplicationBuilder += SetupApplicationBuilder;
     }
 
     /// <inheritdoc />
@@ -85,16 +89,17 @@ public class OpenStar : IOpenStarClient
            .CreateLogger()
            .ForContext("SourceContext", typeof(OpenStar).Namespace);
 
-    /// <inheritdoc />
-    public Task SetupApplication(WebApplication app)
+    private Task SetupApplication(WebApplication app)
     {
+        app.Use(Middleware.Invoke);
+
         return Task.CompletedTask;
     }
 
-    /// <inheritdoc />
-    public Task SetupApplicationBuilder(WebApplicationBuilder builder)
+    private Task SetupApplicationBuilder(WebApplicationBuilder builder)
     {
-        builder.Host.UseSerilog(Log.Logger);
+        builder.Host.UseSerilog(Logger);
+
         return Task.CompletedTask;
     }
 
@@ -117,59 +122,25 @@ public class OpenStar : IOpenStarClient
             loader.Load();
             loader.Register();
         }
-        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        await OpenStarEvents.OnClusterInitialize(Instance);
 
-        await Instance.InitBuilder(builder);
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        await OpenStarEvents.OnWebApplicationBuilderInitialize(builder);
 
         Instance.App = builder.Build();
+        await OpenStarEvents.OnWebApplicationInitialize(Instance.App);
 
-        await Instance.InitClusters();
         Instance.Start();
     }
 
     /// <inheritdoc />
     public void Start()
     {
-        Log.Information("Starting OpenStar v{Version}", GetVersion());
+        Logger.Information("Starting OpenStar v{Version}", GetVersion());
 
         if (App == null)
             throw new NullReferenceException("The ASP.NET App has not been set up yet, please initialize it first.");
 
         App.Run();
     }
-
-    /// <summary>
-    /// Initializes a WebApplicationBuilder
-    /// </summary>
-    /// <param name="builder">A WebApplicationBuilder</param>
-    private async Task InitBuilder(WebApplicationBuilder builder)
-    {
-        await SetupApplicationBuilder(builder);
-        foreach (var c in Manager.Clusters)
-        {
-            c.Value.Logger.Information("Setting up WebApplicationBuilder");
-            await c.Value.SetupApplicationBuilder(builder);
-        }
-    }
-
-    /// <summary>
-    /// Initializes all Clusters and our ASP.NET WebApplication
-    /// </summary>
-    private async Task InitClusters()
-    {
-        if (App == null)
-            throw new NullReferenceException("The ASP.NET App has not been set up yet, please initialize it first.");
-
-        App.Use(Middleware.Invoke);
-        await SetupApplication(App);
-        foreach (var c in Manager.Clusters)
-        {
-            c.Value.Logger.Information("Setting up WebApplication");
-            await c.Value.SetupApplication(App);
-
-            Logger.Information("Set up Cluster {cluster}", c.Value.GetName());
-        }
-    }
-
-
 }

@@ -33,7 +33,7 @@ public interface IApi
     ///     Registers all endpoints with a WebApplication, and provides API docs
     /// </summary>
     /// <param name="builder">The builder to register the endpoints for</param>
-    public void SetupEndpoints(IEndpointRouteBuilder builder)
+    public ValueTask SetupEndpoints(IEndpointRouteBuilder builder)
     {
         Endpoints.ForEach(e =>
         {
@@ -62,5 +62,7 @@ public interface IApi
 
             Logger.Information("Registered endpoint {name} ({path})", e.DisplayName, e.Path);
         });
+
+        return ValueTask.CompletedTask;
     }
 }

@@ -43,16 +43,4 @@ public interface ICluster
     /// </summary>
     /// <returns>The new logger</returns>
     protected ILogger CreateLogger();
-
-    /// <summary>
-    /// Called during initialization of the WebApplication to let each Cluster modify it
-    /// </summary>
-    /// <param name="app">OpenStar's WebApplication</param>
-    public Task SetupApplication(WebApplication app);
-
-    /// <summary>
-    /// Called during initialization of the WebApplicationBuilder to let each Cluster modify it before building
-    /// </summary>
-    /// <param name="builder">OpenStar's WebApplicationBuilder</param>
-    public Task SetupApplicationBuilder(WebApplicationBuilder builder);
 }

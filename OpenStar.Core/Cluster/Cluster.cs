@@ -45,10 +45,5 @@ public abstract class Cluster : ICluster
     public abstract string GetVersion();
 
     /// <inheritdoc />
-    public abstract Task SetupApplicationBuilder(WebApplicationBuilder builder);
-    /// <inheritdoc />
-    public abstract Task SetupApplication(WebApplication app);
-
-    /// <inheritdoc />
     public abstract ClusterConfig? GetConfig();
 }

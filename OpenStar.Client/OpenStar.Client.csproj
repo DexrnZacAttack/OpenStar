@@ -5,7 +5,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <Company>Dexrn ZacAttack</Company>
-        <AssemblyVersion>1.0.1</AssemblyVersion>
+        <AssemblyVersion>1.0.2</AssemblyVersion>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.AspNetCore.OpenApi.Generated</InterceptorsNamespaces>
         <Version>1.0.1</Version>
