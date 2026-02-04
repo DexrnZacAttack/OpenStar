@@ -24,7 +24,7 @@ public class FilesystemClusterLoader : ClusterLoader
     /// <summary>
     /// Cluster types that we register
     /// </summary>
-    private IEnumerable<Type>? _clusterTypes;
+    private IEnumerable<Type> _clusterTypes = [];
 
     /// <summary>
     /// Where to load Clusters from
@@ -87,17 +87,14 @@ public class FilesystemClusterLoader : ClusterLoader
                 continue;
             }
 
-            _clusterTypes = c.GetTypes()
-                             .Where(t => cl.IsAssignableFrom(t) && t is { IsAbstract: false, IsInterface: false });
+            _clusterTypes = _clusterTypes.Concat(c.GetTypes()
+                                               .Where(t => cl.IsAssignableFrom(t) && t is { IsAbstract: false, IsInterface: false }));
         }
     }
 
     /// <inheritdoc />
     public override void Register()
     {
-        if (_clusterTypes is null)
-            return;
-
         foreach (Type cluster in _clusterTypes)
         {
             try
@@ -105,7 +102,7 @@ public class FilesystemClusterLoader : ClusterLoader
                 // I think this can throw an exception so we do have to catch
                 if (Activator.CreateInstance(cluster, OpenStar.Instance) is ICluster cc)
                 {
-                    Manager.Add(cc);
+                    Manager.Add(cc.GetType(), cc);
                     Logger.Information("Registered cluster {Cluster} v{Version}", cc.GetName(), cc.GetVersion());
                 }
                 else

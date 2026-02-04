@@ -34,4 +34,9 @@ public class ClusterManager
     {
         Clusters[typeof(T)] = cluster;
     }
+
+    internal void Add(Type t, ICluster cluster)
+    {
+        Clusters[t] = cluster;
+    }
 }

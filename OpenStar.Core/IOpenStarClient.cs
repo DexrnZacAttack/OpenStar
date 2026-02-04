@@ -23,8 +23,13 @@ public interface IOpenStarClient : ICluster
     WebApplication? App { get; internal set; }
 
     /// <summary>
-    /// Whether OpenStar is running in a development environment
+    /// Whether the client is running in a development environment
     /// </summary>
     /// <returns>`true` if devenv</returns>
     bool IsDevelopmentEnvironment();
+
+    /// <summary>
+    /// Starts the client and the ASP.NET Application
+    /// </summary>
+    void Start();
 }

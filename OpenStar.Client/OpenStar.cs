@@ -127,9 +127,7 @@ public class OpenStar : IOpenStarClient
         Instance.Start();
     }
 
-    /// <summary>
-    /// Starts OpenStar and the ASP.NET Application
-    /// </summary>
+    /// <inheritdoc />
     public void Start()
     {
         Log.Information("Starting OpenStar v{Version}", GetVersion());
@@ -149,6 +147,7 @@ public class OpenStar : IOpenStarClient
         await SetupApplicationBuilder(builder);
         foreach (var c in Manager.Clusters)
         {
+            c.Value.Logger.Information("Setting up WebApplicationBuilder");
             await c.Value.SetupApplicationBuilder(builder);
         }
     }
@@ -165,8 +164,10 @@ public class OpenStar : IOpenStarClient
         await SetupApplication(App);
         foreach (var c in Manager.Clusters)
         {
+            c.Value.Logger.Information("Setting up WebApplication");
             await c.Value.SetupApplication(App);
-            Log.Information("Set up Cluster {cluster}", c.Value.GetName());
+
+            Logger.Information("Set up Cluster {cluster}", c.Value.GetName());
         }
     }
 
