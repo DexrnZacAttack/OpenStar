@@ -9,7 +9,7 @@ using OpenStar.Client.Cluster.Loader;
 using OpenStar.Client.Endpoint;
 using OpenStar.Core;
 using OpenStar.Core.Cluster;
-using OpenStar.Events;
+using OpenStar.Core.Events;
 using Serilog;
 using ILogger = Serilog.ILogger;
 

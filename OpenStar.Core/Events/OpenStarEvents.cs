@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Builder;
-using OpenStar.Core;
 
-// ReSharper disable CheckNamespace
-namespace OpenStar.Events;
+namespace OpenStar.Core.Events;
 
+/// <summary>
+/// Events fired by the client
+/// </summary>
 public static class OpenStarEvents
 {
     /// <summary>
