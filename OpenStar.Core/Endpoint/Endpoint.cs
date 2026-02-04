@@ -1,4 +1,6 @@
-namespace OpenStar.Endpoint;
+using Microsoft.AspNetCore.Http;
+
+namespace OpenStar.Core.Endpoint;
 
 /// <summary>
 ///     API endpoint info

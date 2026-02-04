@@ -1,13 +1,19 @@
-using OpenStar.Cluster.Config;
+using Microsoft.AspNetCore.Builder;
+using OpenStar.Core.Cluster.Config;
 using ILogger = Serilog.ILogger;
 
-namespace OpenStar.Cluster;
+namespace OpenStar.Core.Cluster;
 
 /// <summary>
 ///     OpenStar extension interface
 /// </summary>
 public interface ICluster
 {
+    /// <summary>
+    /// Cluster logger
+    /// </summary>
+    public ILogger Logger { get; }
+
     /// <summary>
     ///     Gets the name of the Cluster
     /// </summary>

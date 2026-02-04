@@ -1,9 +1,15 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
+using OpenStar.Core;
+using OpenStar.Core.Cluster;
 using Serilog;
 using ILogger = Serilog.ILogger;
 
-namespace OpenStar.Cluster.Loader;
+namespace OpenStar.Client.Cluster.Loader;
 
 /// <summary>
 /// Loads Cluster assemblies from the filesystem
@@ -73,6 +79,8 @@ public class FilesystemClusterLoader : ClusterLoader
             }
             catch (BadImageFormatException ex)
             {
+                Logger.Error(ex, "Failed to load assembly {name}.dll", name);
+
                 ctx.Unload();
                 _asmContexts.Remove(name);
 
@@ -95,7 +103,7 @@ public class FilesystemClusterLoader : ClusterLoader
             try
             {
                 // I think this can throw an exception so we do have to catch
-                if (Activator.CreateInstance(cluster, this) is ICluster cc)
+                if (Activator.CreateInstance(cluster, OpenStar.Instance) is ICluster cc)
                 {
                     Manager.Add(cc);
                     Logger.Information("Registered cluster {Cluster} v{Version}", cc.GetName(), cc.GetVersion());

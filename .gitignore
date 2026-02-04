@@ -1,8 +1,8 @@
 
-/bin
-appsettings.Development.json
-appsettings.json
-/bind
-/logs
-/obj
+**/bin
+**/appsettings.Development.json
+**/appsettings.json
+**/bind
+**/logs
+**/obj
 *.user

@@ -1,4 +1,7 @@
-namespace OpenStar.Extensions;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
+
+namespace OpenStar.Core.Extensions;
 
 /// <summary>
 /// Extensions for ASP.NET's WebApplication and related classes

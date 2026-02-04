@@ -1,7 +1,10 @@
-using OpenStar.Extensions;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using OpenStar.Core.Extensions;
 using ILogger = Serilog.ILogger;
 
-namespace OpenStar.Endpoint;
+namespace OpenStar.Core.Endpoint;
 
 /// <summary>
 ///     General API interface, to be inherited by all API classes
@@ -34,7 +37,7 @@ public interface IApi
     {
         Endpoints.ForEach(e =>
         {
-            if (e.DeveloperOnly && !OpenStar.Instance.App!.Environment.IsDevelopment())
+            if (e.DeveloperOnly && OpenStarCore.Instance != null && OpenStarCore.Instance.Client.IsDevelopmentEnvironment())
                 return;
 
             RouteHandlerBuilder b = builder.Map($"{EndpointGroup}/{e.Path}", e.Method, e.Handler)

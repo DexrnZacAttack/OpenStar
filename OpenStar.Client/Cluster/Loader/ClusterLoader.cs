@@ -1,7 +1,8 @@
+using OpenStar.Core.Cluster;
 using Serilog;
 using ILogger = Serilog.ILogger;
 
-namespace OpenStar.Cluster.Loader;
+namespace OpenStar.Client.Cluster.Loader;
 
 /// <summary>
 /// Loads and registers Clusters

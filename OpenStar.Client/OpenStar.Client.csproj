@@ -5,19 +5,23 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <Company>Dexrn ZacAttack</Company>
-        <AssemblyVersion>1.2.0</AssemblyVersion>
+        <AssemblyVersion>1.0.0</AssemblyVersion>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.AspNetCore.OpenApi.Generated</InterceptorsNamespaces>
         <Version>1.2.0</Version>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.2"/>
         <PackageReference Include="Serilog" Version="4.3.1-dev-02395"/>
         <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
         <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1"/>
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.1-dev-02315"/>
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.0.1"/>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.1"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\OpenStar.Core\OpenStar.Core.csproj" />
     </ItemGroup>
 
 </Project>

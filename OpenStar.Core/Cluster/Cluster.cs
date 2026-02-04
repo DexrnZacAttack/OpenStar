@@ -1,8 +1,9 @@
-using OpenStar.Cluster.Config;
+using Microsoft.AspNetCore.Builder;
+using OpenStar.Core.Cluster.Config;
 using Serilog;
 using ILogger = Serilog.ILogger;
 
-namespace OpenStar.Cluster;
+namespace OpenStar.Core.Cluster;
 
 /// <summary>
 /// An OpenStar module/plugin
@@ -12,13 +13,13 @@ public abstract class Cluster : ICluster
     /// <summary>
     /// The OpenStar instance which owns the Cluster
     /// </summary>
-    protected readonly OpenStar Owner;
+    protected readonly IOpenStarClient Owner;
 
     /// <summary>
     /// Creates a new Cluster
     /// </summary>
     /// <param name="owner">The OpenStar instance which owns the Cluster</param>
-    protected Cluster(OpenStar owner)
+    protected Cluster(IOpenStarClient owner)
     {
         Owner = owner;
         CreateLogger();
@@ -33,7 +34,10 @@ public abstract class Cluster : ICluster
         Owner.Logger.ForContext("SourceContext", GetName());
 
     /// <inheritdoc />
-    public virtual string GetStorageDirectory() => Path.Join(Owner.StoragePath, GetName());
+    public virtual string GetStorageDirectory() => Path.Join(Owner.GetStorageDirectory(), GetName());
+
+    /// <inheritdoc />
+    public abstract ILogger Logger { get; init; }
 
     /// <inheritdoc />
     public abstract string GetName();

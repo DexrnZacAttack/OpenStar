@@ -1,6 +1,6 @@
-using OpenStar.Cluster.Config;
+using OpenStar.Core.Cluster.Config;
 
-namespace OpenStar;
+namespace OpenStar.Client;
 
 /// <summary>
 /// OpenStar config settings

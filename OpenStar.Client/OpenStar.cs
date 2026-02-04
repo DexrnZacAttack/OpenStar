@@ -1,21 +1,25 @@
+using System;
+using System.IO;
 using System.Reflection;
-using System.Runtime.Loader;
-using Microsoft.AspNetCore.Http.Extensions;
-using OpenStar.Cluster;
-using OpenStar.Cluster.Config;
-using OpenStar.Cluster.Loader;
-using OpenStar.Endpoint;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Hosting;
+using OpenStar.Core.Cluster.Config;
+using OpenStar.Client.Cluster.Loader;
+using OpenStar.Client.Endpoint;
+using OpenStar.Core;
+using OpenStar.Core.Cluster;
 using Serilog;
 using ILogger = Serilog.ILogger;
 
-namespace OpenStar;
+namespace OpenStar.Client;
 
 /// <summary>
 /// OpenStar main class
 ///
 /// This class internally is a Cluster as well, as it implements it's interface.
 /// </summary>
-public class OpenStar : ICluster
+public class OpenStar : IOpenStarClient
 {
     /// <summary>
     /// The OpenStar Instance
@@ -25,32 +29,28 @@ public class OpenStar : ICluster
     /// <summary>
     /// OpenStar config instance
     /// </summary>
-    public readonly OpenStarConfig Config;
+    private readonly OpenStarConfig _config;
 
     /// <summary>
     /// The path where OpenStar will write to
     /// </summary>
-    public readonly string StoragePath = Path.Combine(AppContext.BaseDirectory, "OpenStarRoot");
+    private readonly string _storagePath = Path.Combine(AppContext.BaseDirectory, "OpenStarRoot");
+
+    /// <inheritdoc />
+    public ILogger Logger { get; }
 
     /// <summary>
     /// Holds and manages Clusters
     /// </summary>
-    public readonly ClusterManager Manager = new ClusterManager();
+    public ClusterManager Manager { get; } = new ClusterManager();
 
     /// <summary>
     /// List of cluster loaders to use when loading Clusters
     /// </summary>
     private readonly ClusterLoader[] _loaders;
 
-    /// <summary>
-    /// The ASP.NET WebApplication
-    /// </summary>
-    public WebApplication? App { get; private set; }
-
-    /// <summary>
-    /// Default OpenStar logger
-    /// </summary>
-    public ILogger Logger { get; private set; }
+    /// <inheritdoc />
+    public WebApplication? App { get; set; }
 
     /// <summary>
     /// Creates a new OpenStar instance
@@ -59,10 +59,10 @@ public class OpenStar : ICluster
     {
         Logger = CreateLogger();
 
-        Config = ClusterConfigFile.Load<OpenStarConfig>(this);
+        _config = ClusterConfigFile.Load<OpenStarConfig>(this);
 
-        string clp = Path.Combine(StoragePath, "Clusters");
-        _loaders = [new FilesystemClusterLoader(this.Manager, clp)];
+        string clp = Path.Combine(_storagePath, "Clusters");
+        _loaders = [new FilesystemClusterLoader(this.Manager, clp, Logger.ForContext<FilesystemClusterLoader>())];
     }
 
     /// <inheritdoc />
@@ -71,7 +71,7 @@ public class OpenStar : ICluster
     /// <inheritdoc />
     public string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown";
     /// <inheritdoc />
-    public string GetStorageDirectory() => StoragePath;
+    public string GetStorageDirectory() => _storagePath;
 
     /// <inheritdoc />
     public ILogger CreateLogger() =>
@@ -99,7 +99,10 @@ public class OpenStar : ICluster
     }
 
     /// <inheritdoc />
-    public ClusterConfig GetConfig() => Config;
+    public ClusterConfig GetConfig() => _config;
+
+    /// <inheritdoc />
+    public bool IsDevelopmentEnvironment() => App?.Environment.IsDevelopment() ?? false;
 
     /// <summary>
     /// Main function
@@ -107,6 +110,7 @@ public class OpenStar : ICluster
     public static async Task Main()
     {
         Instance = new OpenStar();
+        OpenStarCore.Instance = new OpenStarCore(Instance);
 
         foreach (ClusterLoader loader in Instance._loaders)
         {

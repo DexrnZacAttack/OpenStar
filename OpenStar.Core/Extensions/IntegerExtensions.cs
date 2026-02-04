@@ -1,4 +1,4 @@
-namespace OpenStar.Extensions;
+namespace OpenStar.Core.Extensions;
 
 /// <summary>
 ///     Extensions for various integer types

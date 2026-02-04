@@ -1,9 +1,9 @@
-namespace OpenStar;
+namespace OpenStar.Core;
 
 /// <summary>
 /// OpenStar constants
 /// </summary>
-public class Constants
+public static class Constants
 {
     /// <summary>
     /// Serilog console output line template

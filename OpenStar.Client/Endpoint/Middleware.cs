@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Http.Extensions;
 
-namespace OpenStar.Endpoint;
+namespace OpenStar.Client.Endpoint;
 
 /// <summary>
 /// OpenStar Middleware

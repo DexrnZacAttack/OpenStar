@@ -1,4 +1,4 @@
-namespace OpenStar.Cluster;
+namespace OpenStar.Core.Cluster;
 
 /// <summary>
 /// Holds and manages Clusters
@@ -8,7 +8,7 @@ public class ClusterManager
     /// <summary>
     /// Registered Clusters
     /// </summary>
-    internal readonly Dictionary<Type, ICluster> Clusters = [];
+    public readonly Dictionary<Type, ICluster> Clusters = [];
 
     /// <summary>
     /// Gets a Cluster instance by type
