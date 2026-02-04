@@ -1,7 +1,15 @@
 namespace OpenStar.Extensions;
 
+/// <summary>
+/// String extension methods
+/// </summary>
 public static class StringExtensions
 {
+    /// <summary>
+    /// Converts a string to a slug
+    /// </summary>
+    /// <param name="s">The string to convert</param>
+    /// <returns>The string as a slug</returns>
     public static string ToSlug(this string s)
     {
         var ss = s.ToLower().AsSpan();
@@ -30,7 +38,12 @@ public static class StringExtensions
         return new string(o[..j]);
     }
 
-    // https://stackoverflow.com/a/21755933
+    /// <summary>
+    /// Turns the first char to lowercase in a string
+    /// </summary>
+    /// <param name="str">The string</param>
+    /// <returns>The same string with the char as lowercase</returns>
+    /// <url>https://stackoverflow.com/a/21755933</url>
     public static string? FirstCharToLowerCase(this string? str)
     {
         if (!string.IsNullOrEmpty(str) && char.IsUpper(str[0]))

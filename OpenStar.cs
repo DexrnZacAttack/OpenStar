@@ -3,34 +3,77 @@ using System.Runtime.Loader;
 using Microsoft.AspNetCore.Http.Extensions;
 using OpenStar.Cluster;
 using OpenStar.Cluster.Config;
+using OpenStar.Cluster.Loader;
+using OpenStar.Endpoint;
 using Serilog;
 using ILogger = Serilog.ILogger;
 
 namespace OpenStar;
 
+/// <summary>
+/// OpenStar main class
+///
+/// This class internally is a Cluster as well, as it implements it's interface.
+/// </summary>
 public class OpenStar : ICluster
 {
-    private readonly Dictionary<string, AssemblyLoadContext> _asmContexts = new();
-    private readonly Dictionary<Type, ICluster> _clusters = [];
-
-    public readonly OpenStarConfig Config;
-    public readonly string ConfigPath = Path.Combine(AppContext.BaseDirectory, "OpenStarRoot");
-
-    private OpenStar()
-    {
-        Log.Logger = CreateLogger();
-
-        Config = ClusterConfigFile.Load<OpenStarConfig>(this);
-    }
-
-    public WebApplication App { get; private set; }
+    /// <summary>
+    /// The OpenStar Instance
+    /// </summary>
     public static OpenStar Instance { get; private set; } = null!;
 
+    /// <summary>
+    /// OpenStar config instance
+    /// </summary>
+    public readonly OpenStarConfig Config;
+
+    /// <summary>
+    /// The path where OpenStar will write to
+    /// </summary>
+    public readonly string StoragePath = Path.Combine(AppContext.BaseDirectory, "OpenStarRoot");
+
+    /// <summary>
+    /// Holds and manages Clusters
+    /// </summary>
+    public readonly ClusterManager Manager = new ClusterManager();
+
+    /// <summary>
+    /// List of cluster loaders to use when loading Clusters
+    /// </summary>
+    private readonly ClusterLoader[] _loaders;
+
+    /// <summary>
+    /// The ASP.NET WebApplication
+    /// </summary>
+    public WebApplication? App { get; private set; }
+
+    /// <summary>
+    /// Default OpenStar logger
+    /// </summary>
+    public ILogger Logger { get; private set; }
+
+    /// <summary>
+    /// Creates a new OpenStar instance
+    /// </summary>
+    private OpenStar()
+    {
+        Logger = CreateLogger();
+
+        Config = ClusterConfigFile.Load<OpenStarConfig>(this);
+
+        string clp = Path.Combine(StoragePath, "Clusters");
+        _loaders = [new FilesystemClusterLoader(this.Manager, clp)];
+    }
+
+    /// <inheritdoc />
     public string GetName() => "OpenStar";
 
+    /// <inheritdoc />
     public string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown";
-    public string GetStorageDirectory() => ConfigPath;
+    /// <inheritdoc />
+    public string GetStorageDirectory() => StoragePath;
 
+    /// <inheritdoc />
     public ILogger CreateLogger() =>
         new LoggerConfiguration()
            .WriteTo.Console(outputTemplate: Constants.ConsoleOutputTemplate)
@@ -42,27 +85,34 @@ public class OpenStar : ICluster
            .CreateLogger()
            .ForContext("SourceContext", typeof(OpenStar).Namespace);
 
+    /// <inheritdoc />
     public Task SetupApplication(WebApplication app)
     {
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
     public Task SetupApplicationBuilder(WebApplicationBuilder builder)
     {
         builder.Host.UseSerilog(Log.Logger);
         return Task.CompletedTask;
     }
 
-    public ClusterConfig? GetConfig() => Config;
+    /// <inheritdoc />
+    public ClusterConfig GetConfig() => Config;
 
-    public T? TryGetCluster<T>() where T : Cluster.Cluster
-        => _clusters[typeof(T)] as T;
-
-    public static async Task Main(string[] args)
+    /// <summary>
+    /// Main function
+    /// </summary>
+    public static async Task Main()
     {
         Instance = new OpenStar();
 
-        Instance.RegisterClusters();
+        foreach (ClusterLoader loader in Instance._loaders)
+        {
+            loader.Load();
+            loader.Register();
+        }
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
 
         await Instance.InitBuilder(builder);
@@ -73,96 +123,48 @@ public class OpenStar : ICluster
         Instance.Start();
     }
 
+    /// <summary>
+    /// Starts OpenStar and the ASP.NET Application
+    /// </summary>
     public void Start()
     {
         Log.Information("Starting OpenStar v{Version}", GetVersion());
+
+        if (App == null)
+            throw new NullReferenceException("The ASP.NET App has not been set up yet, please initialize it first.");
+
         App.Run();
     }
 
-    private void RegisterClusters()
-    {
-        string clp = Path.Combine(ConfigPath, "Clusters");
-        if (!Directory.Exists(clp))
-            Directory.CreateDirectory(clp);
-
-        Type cl = typeof(ICluster);
-        foreach (string d in Directory.EnumerateDirectories(clp))
-        {
-            string name = Path.GetFileName(d);
-            Log.Information("Loading Cluster {Directory}", name);
-
-            AssemblyLoadContext ctx = new(name, true);
-            ctx.Resolving += (context, nm) =>
-            {
-                string dp = Path.Combine(d, $"{nm.Name}.dll");
-                return File.Exists(dp) ? context.LoadFromAssemblyPath(dp) : null;
-            };
-
-            _asmContexts.Add(name, ctx);
-            
-            Assembly c;
-            try
-            {
-                c = ctx.LoadFromAssemblyPath(Path.Combine(d, $"{name}.dll"));
-            }
-            catch (BadImageFormatException ex)
-            {
-                ctx.Unload();
-                _asmContexts.Remove(name);
-
-                continue;
-            }
-
-            var clusters = c.GetTypes()
-                            .Where(t => cl.IsAssignableFrom(t) && t is { IsAbstract: false, IsInterface: false });
-
-            foreach (Type cluster in clusters)
-                try
-                {
-                    // I think this can throw an exception so we do have to catch
-                    if (Activator.CreateInstance(cluster, this) is ICluster cc)
-                    {
-                        _clusters.Add(cc.GetType(), cc);
-                        Log.Information("Registered cluster {Cluster} v{Version}", cc.GetName(), cc.GetVersion());
-                    }
-                    else
-                    {
-                        Log.Error("Couldn't create instance of {Type}", nameof(cluster));
-                    }
-                }
-                catch (Exception e)
-                {
-                    Log.Error("Couldn't create instance of {Type}: {Ex}", nameof(cluster), e);
-                }
-        }
-    }
-
+    /// <summary>
+    /// Initializes a WebApplicationBuilder
+    /// </summary>
+    /// <param name="builder">A WebApplicationBuilder</param>
     private async Task InitBuilder(WebApplicationBuilder builder)
     {
         await SetupApplicationBuilder(builder);
-        foreach (var c in _clusters) await c.Value.SetupApplicationBuilder(builder);
+        foreach (var c in Manager.Clusters)
+        {
+            await c.Value.SetupApplicationBuilder(builder);
+        }
     }
 
+    /// <summary>
+    /// Initializes all Clusters and our ASP.NET WebApplication
+    /// </summary>
     private async Task InitClusters()
     {
-        App.Use(Middleware);
+        if (App == null)
+            throw new NullReferenceException("The ASP.NET App has not been set up yet, please initialize it first.");
+
+        App.Use(Middleware.Invoke);
         await SetupApplication(App);
-        foreach (var c in _clusters)
+        foreach (var c in Manager.Clusters)
         {
             await c.Value.SetupApplication(App);
             Log.Information("Set up Cluster {cluster}", c.Value.GetName());
         }
     }
 
-    private static async Task Middleware(HttpContext context, Func<Task> next)
-    {
-        context.Response.Headers.XPoweredBy = $"OpenStar v{Instance.GetVersion()}";
 
-        string? ip = context.Request.Headers["X-OpenStar-Ip"]
-                            .FirstOrDefault(context.Connection.RemoteIpAddress?.ToString());
-
-        Log.Information("[{Method} | {Ip}] {Path}", context.Request.Method, ip,
-                        context.Request.GetEncodedPathAndQuery());
-        await next.Invoke();
-    }
 }

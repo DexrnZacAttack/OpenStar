@@ -1,4 +1,4 @@
-namespace OpenStar;
+namespace OpenStar.Endpoint;
 
 /// <summary>
 ///     API endpoint info

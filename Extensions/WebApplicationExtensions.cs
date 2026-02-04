@@ -1,18 +1,29 @@
 namespace OpenStar.Extensions;
 
+/// <summary>
+/// Extensions for ASP.NET's WebApplication and related classes
+/// </summary>
 public static class WebApplicationExtensions
 {
-    public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints, string path, HttpMethod method,
+    /// <summary>
+    /// Generic router map function which calls the intended map function based on the given HttpMethod
+    /// </summary>
+    /// <param name="route">Route to map</param>
+    /// <param name="path">Where to map it to</param>
+    /// <param name="method">HTTP method to map</param>
+    /// <param name="handler">The function that will handle requests to that route</param>
+    /// <returns></returns>
+    public static RouteHandlerBuilder Map(this IEndpointRouteBuilder route, string path, HttpMethod method,
                                           Delegate handler)
     {
         return method.Method switch
         {
-            "GET"    => endpoints.MapGet(path, handler),
-            "PUT"    => endpoints.MapPut(path, handler),
-            "POST"   => endpoints.MapPost(path, handler),
-            "DELETE" => endpoints.MapDelete(path, handler),
-            "PATCH"  => endpoints.MapPatch(path, handler),
-            _        => endpoints.Map(path, handler)
+            "GET"    => route.MapGet(path, handler),
+            "PUT"    => route.MapPut(path, handler),
+            "POST"   => route.MapPost(path, handler),
+            "DELETE" => route.MapDelete(path, handler),
+            "PATCH"  => route.MapPatch(path, handler),
+            _        => route.Map(path, handler)
         };
     }
 }

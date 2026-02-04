@@ -1,5 +1,5 @@
 namespace OpenStar.Cluster.Config;
 
-public class ClusterConfig
+public abstract class ClusterConfig
 {
 }

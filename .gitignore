@@ -5,3 +5,4 @@ appsettings.json
 /bind
 /logs
 /obj
+*.user

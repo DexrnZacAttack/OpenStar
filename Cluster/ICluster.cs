@@ -4,7 +4,7 @@ using ILogger = Serilog.ILogger;
 namespace OpenStar.Cluster;
 
 /// <summary>
-///     OpenStar extension class
+///     OpenStar extension interface
 /// </summary>
 public interface ICluster
 {
@@ -27,9 +27,9 @@ public interface ICluster
     public string GetStorageDirectory();
 
     /// <summary>
-    ///     Gets the Cluster's config
+    /// Gets config settings for a cluster
     /// </summary>
-    /// <returns>The Cluster's config</returns>
+    /// <returns>Config settings, if present</returns>
     public ClusterConfig? GetConfig();
 
     /// <summary>
@@ -39,9 +39,14 @@ public interface ICluster
     protected ILogger CreateLogger();
 
     /// <summary>
-    ///     Sets up the Cluster
+    /// Called during initialization of the WebApplication to let each Cluster modify it
     /// </summary>
+    /// <param name="app">OpenStar's WebApplication</param>
     public Task SetupApplication(WebApplication app);
 
+    /// <summary>
+    /// Called during initialization of the WebApplicationBuilder to let each Cluster modify it before building
+    /// </summary>
+    /// <param name="builder">OpenStar's WebApplicationBuilder</param>
     public Task SetupApplicationBuilder(WebApplicationBuilder builder);
 }
