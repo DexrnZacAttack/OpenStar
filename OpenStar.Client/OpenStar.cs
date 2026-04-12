@@ -1,4 +1,5 @@
 using System;
+using System.CommandLine;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -35,7 +36,7 @@ public class OpenStar : IOpenStarClient
     /// <summary>
     /// The path where OpenStar will write to
     /// </summary>
-    private readonly string _storagePath = Path.Combine(AppContext.BaseDirectory, "OpenStarRoot");
+    private readonly string _storagePath;
 
     /// <inheritdoc />
     public ILogger Logger { get; }
@@ -56,8 +57,10 @@ public class OpenStar : IOpenStarClient
     /// <summary>
     /// Creates a new OpenStar instance
     /// </summary>
-    private OpenStar()
+    private OpenStar(string storagePath)
     {
+        this._storagePath = storagePath;
+
         Logger = CreateLogger();
 
         _config = ClusterConfigFile.Load<OpenStarConfig>(this);
@@ -112,25 +115,53 @@ public class OpenStar : IOpenStarClient
     /// <summary>
     /// Main function
     /// </summary>
-    public static async Task Main()
+    public static async Task<int> Main(string[] args)
     {
-        Instance = new OpenStar();
-        OpenStarCore.Instance = new OpenStarCore(Instance);
-
-        foreach (ClusterLoader loader in Instance._loaders)
+        Option<string> storageDirectoryOption = new("--storage-directory")
         {
-            loader.Load();
-            loader.Register();
-        }
-        await OpenStarEvents.OnClusterInitialize(Instance);
+            Description = "The directory used to store webserver data",
+            Required = false
+        };
 
-        WebApplicationBuilder builder = WebApplication.CreateBuilder();
-        await OpenStarEvents.OnWebApplicationBuilderInitialize(builder);
+        storageDirectoryOption.Validators.Add(res =>
+        {
+            string? p = res.GetValue(storageDirectoryOption);
+            if (p == null)
+                return; // we'll use application dir instead
 
-        Instance.App = builder.Build();
-        await OpenStarEvents.OnWebApplicationInitialize(Instance.App);
+            if (!Directory.Exists(p))
+                res.AddError($"Storage Directory '{p}' does not exist");
+        });
 
-        Instance.Start();
+        RootCommand rootCommand = new("Extensible ASP.NET host")
+        {
+            storageDirectoryOption
+        };
+
+        rootCommand.SetAction(async res =>
+        {
+            string storagePath = res.GetValue(storageDirectoryOption) ?? Path.Combine(AppContext.BaseDirectory, "OpenStarRoot");
+
+            Instance = new OpenStar(storagePath);
+            OpenStarCore.Instance = new OpenStarCore(Instance);
+
+            foreach (ClusterLoader loader in Instance._loaders)
+            {
+                loader.Load();
+                loader.Register();
+            }
+            await OpenStarEvents.OnClusterInitialize(Instance);
+
+            WebApplicationBuilder builder = WebApplication.CreateBuilder();
+            await OpenStarEvents.OnWebApplicationBuilderInitialize(builder);
+
+            Instance.App = builder.Build();
+            await OpenStarEvents.OnWebApplicationInitialize(Instance.App);
+
+            Instance.Start();
+        });
+
+        return await rootCommand.Parse(args).InvokeAsync();
     }
 
     /// <inheritdoc />
