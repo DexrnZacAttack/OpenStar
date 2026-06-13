@@ -1,3 +1,5 @@
+using System.Buffers;
+
 namespace OpenStar.Core.Extensions;
 
 /// <summary>
@@ -12,10 +14,13 @@ public static class StringExtensions
     /// <returns>The string as a slug</returns>
     public static string ToSlug(this string s)
     {
+        const int maxStackallocLength = 1024;
+        
         var ss = s.ToLower().AsSpan();
 
-        Span<char> o = stackalloc char[ss.Length];
-
+        char[]? rented = ss.Length > maxStackallocLength ? ArrayPool<char>.Shared.Rent(ss.Length) : null;
+        Span<char> o = rented != null ? rented.AsSpan() : stackalloc char[ss.Length];
+        
         int j = 0;
         foreach (char c in ss)
             switch (c)
@@ -35,7 +40,11 @@ public static class StringExtensions
                     break;
             }
 
-        return new string(o[..j]);
+        string res = new(o[..j]);
+        if (rented != null)
+            ArrayPool<char>.Shared.Return(rented);
+        
+        return res;
     }
 
     /// <summary>

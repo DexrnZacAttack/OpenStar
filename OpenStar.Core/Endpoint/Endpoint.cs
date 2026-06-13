@@ -3,94 +3,64 @@ using Microsoft.AspNetCore.Http;
 namespace OpenStar.Core.Endpoint;
 
 /// <summary>
-///     API endpoint info
+/// API endpoint info
 /// </summary>
-/// <param name="path">Endpoint path</param>
-/// <param name="method">HTTP method</param>
-/// <param name="handler">Handler function</param>
-public class Endpoint(string path, HttpMethod method, Delegate handler, bool authorized = false)
+/// <param name="Path">Path to API endpoint</param>
+/// <param name="Method">HTTP method type</param>
+/// <param name="Handler">Handler function</param>
+public record Endpoint(string Path, HttpMethod Method, Delegate Handler)
 {
     /// <summary>
-    ///     Handler function
+    ///     Name of the endpoint
     /// </summary>
-    public readonly Delegate Handler = handler;
-
+    public string Name { get; init; } = Path;
+    
     /// <summary>
-    ///     HTTP method type
+    ///     Display name of the endpoint
     /// </summary>
-    public readonly HttpMethod Method = method;
-
+    public string DisplayName { get; init; } =  string.Empty;
+    
     /// <summary>
-    ///     Path to API endpoint
+    ///     Description of the endpoint
     /// </summary>
-    public readonly string Path = path;
+    public string Description { get; init; } = string.Empty;
 
     /// <summary>
     ///     Whether the endpoint requires authorization
     /// </summary>
-    public bool Authorized = authorized;
-
-    /// <summary>
-    ///     Description of the endpoint
-    /// </summary>
-    public string Description = path;
-
+    public bool Authorized { get; init; } = false;
+    
     /// <summary>
     ///     Whether the API is only accessible when building with Debug
     /// </summary>
-    public bool DeveloperOnly = false;
-
-    /// <summary>
-    ///     Display name of the endpoint
-    /// </summary>
-    public string DisplayName = path;
+    public bool DeveloperOnly { get; init; }
 
     /// <summary>
     ///     Methods to run before calling the handler
     /// </summary>
-    public IEndpointFilter[] Filters = [];
+    public IEndpointFilter[] Filters { get; init; } = [];
 
     /// <summary>
     ///     Endpoint group
     /// </summary>
-    public string Group = "";
-
-    /// <summary>
-    ///     Name of the endpoint
-    /// </summary>
-    public string Name = path;
+    public string Group { get; init; } = string.Empty;
 
     /// <summary>
     ///     Possible responses
     /// </summary>
-    public ResponseType[] Responses = [];
+    public ResponseType[] Responses { get; init; } = [];
 
     /// <summary>
     ///     API response type
     /// </summary>
-    /// <param name="statusCode">HTTP response code</param>
-    /// <param name="type">Response type</param>
-    /// <param name="contentType">Response content type</param>
-    public class ResponseType(int statusCode, Type? type = null, string? contentType = null)
+    /// <param name="StatusCode">HTTP response code</param>
+    /// <param name="Type">Response type</param>
+    /// <param name="ContentType">Guaranteed content type (null if none)</param>
+    public record ResponseType(int StatusCode, Type? Type = null, string? ContentType = null)
     {
-        /// <summary>
-        ///     Guaranteed content type (null if none)
-        /// </summary>
-        public readonly string? ContentType = contentType;
-
-        /// <summary>
-        ///     Response code
-        /// </summary>
-        public readonly int StatusCode = statusCode;
-
-        /// <summary>
-        ///     Response type
-        /// </summary>
-        public readonly Type? Type = type;
-
         /// <summary>
         ///     Extra content types
         /// </summary>
-        public string[] AdditionalContentTypes = [];
+        public string[] AdditionalContentTypes { get; init; } = [];
     }
 }

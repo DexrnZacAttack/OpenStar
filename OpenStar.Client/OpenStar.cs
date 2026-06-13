@@ -1,10 +1,5 @@
-using System;
 using System.CommandLine;
-using System.IO;
 using System.Reflection;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Hosting;
 using OpenStar.Core.Cluster.Config;
 using OpenStar.Client.Cluster.Loader;
 using OpenStar.Client.Endpoint;
@@ -28,23 +23,13 @@ public class OpenStar : IOpenStarClient
     /// </summary>
     public static OpenStar Instance { get; private set; } = null!;
 
-    /// <summary>
-    /// OpenStar config instance
-    /// </summary>
-    private readonly OpenStarConfig _config;
-
-    /// <summary>
-    /// The path where OpenStar will write to
-    /// </summary>
-    private readonly string _storagePath;
-
     /// <inheritdoc />
     public ILogger Logger { get; }
 
     /// <summary>
     /// Holds and manages Clusters
     /// </summary>
-    public ClusterManager Manager { get; } = new ClusterManager();
+    public ClusterManager Manager { get; } = new();
 
     /// <summary>
     /// List of cluster loaders to use when loading Clusters
@@ -53,45 +38,48 @@ public class OpenStar : IOpenStarClient
 
     /// <inheritdoc />
     public WebApplication? App { get; set; }
+    
+    /// <inheritdoc />
+    public string Name => "OpenStar";
+
+    /// <inheritdoc />
+    public string Version => Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown";
+    
+    /// <inheritdoc />
+    public string StorageDirectory { get; }
+
+    //backing field so we still have typed config access
+    private readonly OpenStarConfig _config;
+
+    /// <inheritdoc />
+    public IClusterConfig Config => _config;
 
     /// <summary>
     /// Creates a new OpenStar instance
     /// </summary>
     private OpenStar(string storagePath)
     {
-        this._storagePath = storagePath;
+        this.StorageDirectory = storagePath;
 
-        Logger = CreateLogger();
+        Logger = new LoggerConfiguration()
+                .WriteTo.Console(outputTemplate: Constants.ConsoleOutputTemplate)
+                .WriteTo
+                .File(Path.Combine(StorageDirectory, "logs", $"OpenStar-{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.log"),
+                      retainedFileCountLimit: null,
+                      outputTemplate: Constants.FileOutputTemplate)
+                .MinimumLevel.Debug()
+                .CreateLogger()
+                .ForContext("SourceContext", typeof(OpenStar).Namespace);
 
         _config = ClusterConfigFile.Load<OpenStarConfig>(this);
 
-        string clp = Path.Combine(_storagePath, "Clusters");
+        string clp = Path.Combine(StorageDirectory, "Clusters");
         _loaders = [new FilesystemClusterLoader(this.Manager, clp, Logger.ForContext<FilesystemClusterLoader>())];
 
         OpenStarEvents.InitializeWebApplication += SetupApplication;
         OpenStarEvents.InitializeWebApplicationBuilder += SetupApplicationBuilder;
     }
-
-    /// <inheritdoc />
-    public string GetName() => "OpenStar";
-
-    /// <inheritdoc />
-    public string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown";
-    /// <inheritdoc />
-    public string GetStorageDirectory() => _storagePath;
-
-    /// <inheritdoc />
-    public ILogger CreateLogger() =>
-        new LoggerConfiguration()
-           .WriteTo.Console(outputTemplate: Constants.ConsoleOutputTemplate)
-           .WriteTo
-           .File(Path.Combine(GetStorageDirectory(), "logs", $"OpenStar-{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.log"),
-                 retainedFileCountLimit: null,
-                 outputTemplate: Constants.FileOutputTemplate)
-           .MinimumLevel.Debug()
-           .CreateLogger()
-           .ForContext("SourceContext", typeof(OpenStar).Namespace);
-
+    
     private Task SetupApplication(WebApplication app)
     {
         app.Use(Middleware.Invoke);
@@ -105,9 +93,6 @@ public class OpenStar : IOpenStarClient
 
         return Task.CompletedTask;
     }
-
-    /// <inheritdoc />
-    public ClusterConfig GetConfig() => _config;
 
     /// <inheritdoc />
     public bool IsDevelopmentEnvironment() => App?.Environment.IsDevelopment() ?? false;
@@ -167,7 +152,7 @@ public class OpenStar : IOpenStarClient
     /// <inheritdoc />
     public void Start()
     {
-        Logger.Information("Starting OpenStar v{Version}", GetVersion());
+        Logger.Information("Starting OpenStar v{Version}", Version);
 
         if (App == null)
             throw new NullReferenceException("The ASP.NET App has not been set up yet, please initialize it first.");

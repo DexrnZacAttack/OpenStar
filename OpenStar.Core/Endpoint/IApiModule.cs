@@ -7,10 +7,10 @@ using ILogger = Serilog.ILogger;
 namespace OpenStar.Core.Endpoint;
 
 /// <summary>
-///     General API interface, to be inherited by all API classes
+///     General API module interface, to be inherited by all API classes
 ///     Holds a group of Endpoints
 /// </summary>
-public interface IApi
+public interface IApiModule
 {
     /// <summary>
     ///     API Group
@@ -33,7 +33,7 @@ public interface IApi
     ///     Registers all endpoints with a WebApplication, and provides API docs
     /// </summary>
     /// <param name="builder">The builder to register the endpoints for</param>
-    public ValueTask SetupEndpoints(IEndpointRouteBuilder builder)
+    public void SetupEndpoints(IEndpointRouteBuilder builder)
     {
         Endpoints.ForEach(e =>
         {
@@ -62,7 +62,5 @@ public interface IApi
 
             Logger.Information("Registered endpoint {name} ({path})", e.DisplayName, e.Path);
         });
-
-        return ValueTask.CompletedTask;
     }
 }

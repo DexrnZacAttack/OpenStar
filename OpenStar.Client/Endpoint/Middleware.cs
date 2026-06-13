@@ -13,7 +13,7 @@ public static class Middleware
 {
     internal static async Task Invoke(HttpContext context, Func<Task> next)
     {
-        context.Response.Headers.XPoweredBy = $"OpenStar v{OpenStar.Instance.GetVersion()}";
+        context.Response.Headers.XPoweredBy = $"OpenStar v{OpenStar.Instance.Version}";
 
         string? ip = context.Request.Headers["X-OpenStar-Ip"]
                             .FirstOrDefault(context.Connection.RemoteIpAddress?.ToString());

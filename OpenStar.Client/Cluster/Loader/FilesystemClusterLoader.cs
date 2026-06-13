@@ -18,6 +18,8 @@ public class FilesystemClusterLoader : ClusterLoader
 {
     /// <summary>
     /// Assembly contexts so we can keep track of what Clusters we have loaded
+    /// 
+    /// Not storing these can cause dotnet to unload our assemblies
     /// </summary>
     private readonly Dictionary<string, AssemblyLoadContext> _asmContexts = new();
 
@@ -103,7 +105,7 @@ public class FilesystemClusterLoader : ClusterLoader
                 if (Activator.CreateInstance(cluster, OpenStar.Instance) is ICluster cc)
                 {
                     Manager.Add(cc.GetType(), cc);
-                    Logger.Information("Registered cluster {Cluster} v{Version}", cc.GetName(), cc.GetVersion());
+                    Logger.Information("Registered cluster {Cluster} v{Version}", cc.Name, cc.Version);
                 }
                 else
                 {

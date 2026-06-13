@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using OpenStar.Core.Cluster.Config;
+using OpenStar.Core.Cluster.Util;
 using Serilog;
 using ILogger = Serilog.ILogger;
 
@@ -13,7 +14,22 @@ public abstract class Cluster : ICluster
     /// <summary>
     /// The OpenStar instance which owns the Cluster
     /// </summary>
-    protected readonly IOpenStarClient Owner;
+    public readonly IOpenStarClient Owner;
+    
+    /// <inheritdoc />
+    public abstract ILogger Logger { get; }
+    
+    /// <inheritdoc />
+    public abstract string Name { get; }
+
+    /// <inheritdoc />
+    public abstract string Version { get; }
+
+    /// <inheritdoc />
+    public string StorageDirectory => Path.Join(Owner.StorageDirectory, Name);
+
+    /// <inheritdoc />
+    public abstract IClusterConfig? Config { get; }
 
     /// <summary>
     /// Creates a new Cluster
@@ -22,28 +38,9 @@ public abstract class Cluster : ICluster
     protected Cluster(IOpenStarClient owner)
     {
         Owner = owner;
-        CreateLogger();
 
-        string d = GetStorageDirectory();
+        string d = StorageDirectory;
         if (!Path.Exists(d))
             Directory.CreateDirectory(d);
     }
-
-    /// <inheritdoc />
-    public ILogger CreateLogger() =>
-        Owner.Logger.ForContext("SourceContext", GetName());
-
-    /// <inheritdoc />
-    public virtual string GetStorageDirectory() => Path.Join(Owner.GetStorageDirectory(), GetName());
-
-    /// <inheritdoc />
-    public abstract ILogger Logger { get; init; }
-
-    /// <inheritdoc />
-    public abstract string GetName();
-    /// <inheritdoc />
-    public abstract string GetVersion();
-
-    /// <inheritdoc />
-    public abstract ClusterConfig? GetConfig();
 }

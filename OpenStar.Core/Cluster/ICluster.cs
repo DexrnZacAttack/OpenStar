@@ -18,29 +18,23 @@ public interface ICluster
     ///     Gets the name of the Cluster
     /// </summary>
     /// <returns>The Cluster's name</returns>
-    public string GetName();
+    public string Name { get; }
 
     /// <summary>
     ///     Gets the version of the Cluster
     /// </summary>
     /// <returns>The Cluster's version</returns>
-    public string GetVersion();
+    public string Version { get; }
 
     /// <summary>
     ///     Gets the storage directory of the Cluster
     /// </summary>
     /// <returns>The Cluster's storage directory</returns>
-    public string GetStorageDirectory();
+    public string StorageDirectory { get; }
 
     /// <summary>
     /// Gets config settings for a cluster
     /// </summary>
     /// <returns>Config settings, if present</returns>
-    public ClusterConfig? GetConfig();
-
-    /// <summary>
-    ///     Creates a logger for the Cluster
-    /// </summary>
-    /// <returns>The new logger</returns>
-    protected ILogger CreateLogger();
+    public IClusterConfig? Config { get; }
 }

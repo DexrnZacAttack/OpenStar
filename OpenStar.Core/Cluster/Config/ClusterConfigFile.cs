@@ -22,7 +22,7 @@ public static class ClusterConfigFile
     /// <typeparam name="T">The config type to load</typeparam>
     /// <returns>The loaded config</returns>
     /// <exception cref="JsonException">If the config file couldn't be deserialized</exception>
-    public static async Task<T> LoadAsync<T>(string root) where T : ClusterConfig, new()
+    public static async Task<T> LoadAsync<T>(string root) where T : IClusterConfig, new()
     {
         string p = Path.Combine(root, "config.json");
 
@@ -52,15 +52,15 @@ public static class ClusterConfigFile
     /// <typeparam name="T">The config type to load</typeparam>
     /// <returns>The loaded config</returns>
     /// <exception cref="JsonException">If the config file couldn't be deserialized</exception>
-    public static async Task<T> LoadAsync<T>(ICluster cluster) where T : ClusterConfig, new()
-        => await LoadAsync<T>(cluster.GetStorageDirectory());
+    public static async Task<T> LoadAsync<T>(ICluster cluster) where T : IClusterConfig, new()
+        => await LoadAsync<T>(cluster.StorageDirectory);
 
     /// <summary>
     /// Writes a given config into config.json inside the given root directory
     /// </summary>
     /// <param name="config">The config we want to serialize</param>
     /// <param name="root">The folder where the resulting config.json will be written</param>
-    public static async Task WriteAsync(ClusterConfig config, string root)
+    public static async Task WriteAsync(IClusterConfig config, string root)
     {
         string p = Path.Combine(root, "config.json");
 
@@ -74,9 +74,9 @@ public static class ClusterConfigFile
     /// <param name="cluster">The cluster which holds the config we want to serialize</param>
     public static async Task WriteAsync(ICluster cluster)
     {
-        ClusterConfig? c = cluster.GetConfig();
+        IClusterConfig? c = cluster.Config;
         if (c != null)
-            await WriteAsync(c, cluster.GetStorageDirectory());
+            await WriteAsync(c, cluster.StorageDirectory);
     }
 
     /// <summary>
@@ -86,7 +86,7 @@ public static class ClusterConfigFile
     /// <typeparam name="T">The config type to load</typeparam>
     /// <returns>The loaded config</returns>
     /// <exception cref="JsonException">If the config file couldn't be deserialized</exception>
-    public static T Load<T>(string root) where T : ClusterConfig, new()
+    public static T Load<T>(string root) where T : IClusterConfig, new()
     {
         string p = Path.Combine(root, "config.json");
 
@@ -115,15 +115,15 @@ public static class ClusterConfigFile
     /// <typeparam name="T">The config type to load</typeparam>
     /// <returns>The loaded config</returns>
     /// <exception cref="JsonException">If the config file couldn't be deserialized</exception>
-    public static T Load<T>(ICluster cluster) where T : ClusterConfig, new()
-        => Load<T>(cluster.GetStorageDirectory());
+    public static T Load<T>(ICluster cluster) where T : IClusterConfig, new()
+        => Load<T>(cluster.StorageDirectory);
 
     /// <summary>
     /// Writes a given config into config.json inside the given root directory
     /// </summary>
     /// <param name="config">The config we want to serialize</param>
     /// <param name="root">The folder where the resulting config.json will be written</param>
-    public static void Write(ClusterConfig config, string root)
+    public static void Write(IClusterConfig config, string root)
     {
         string p = Path.Combine(root, "config.json");
 
@@ -137,9 +137,9 @@ public static class ClusterConfigFile
     /// <param name="cluster">The cluster which holds the config we want to serialize</param>
     public static void Write(ICluster cluster)
     {
-        ClusterConfig? c = cluster.GetConfig();
+        IClusterConfig? c = cluster.Config;
         if (c != null)
-            Write(c, cluster.GetStorageDirectory());
+            Write(c, cluster.StorageDirectory);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public static class ClusterConfigFile
     /// <typeparam name="T">The config type to load</typeparam>
     /// <returns>The loaded config</returns>
     /// <exception cref="JsonException">If the config file couldn't be deserialized</exception>
-    public static async Task<T> LoadConfigAsync<T>(this ICluster cluster) where T : ClusterConfig, new()
+    public static async Task<T> LoadConfigAsync<T>(this ICluster cluster) where T : IClusterConfig, new()
         => await LoadAsync<T>(cluster);
 
     /// <summary>
@@ -166,7 +166,7 @@ public static class ClusterConfigFile
     /// <typeparam name="T">The config type to load</typeparam>
     /// <returns>The loaded config</returns>
     /// <exception cref="JsonException">If the config file couldn't be deserialized</exception>
-    public static T LoadConfig<T>(this ICluster cluster) where T : ClusterConfig, new()
+    public static T LoadConfig<T>(this ICluster cluster) where T : IClusterConfig, new()
         => Load<T>(cluster);
 
     /// <summary>
